@@ -37,17 +37,20 @@ mpstand 는 학교 급식실에서 쓴 문구로 어떠한 제품이 필요하�
 
 ## 2. 베이지안 모델 ( 초기 모델 )
 처음 사용한 모델은 베이지안 모델이었습니다. 베이즈 정리를 사용한 모델로 P(A|B) = P(B|A) * P(A) / P(B) 와 같이 Prior 확률과 Likelihood 를 안다면 Posterior 확률을 구할 수 있다는 간단한 방법으로 구현한 텍스트 모델입니다. 최종 결과로 사용된 모델이 아니므로 간단하게나마 결과만 보이지면 다음과 같이 나오게 됩니다.
-입력 mpstand + 입력 mpname
-= 파인애플 과일 쥬스 과즙 음료 과즙 망고 농축액 파인애플 농축액 천년 풍 밉다 자 연속 망고 파인애플
-추측 pname = 골드파인애플골든엔골드
-실제 pname = 냉장자연속의파인애플망고천년풍밉다
 
-입력 mpstand = 망고 농축액 파인애플 농축액 천년 풍 밉다 자 연속 망고 파인애플 
-추측 pmake = 천년풍밉다
-실제 pmake = 천년풍밉다
+- - -
+입력 mpstand + 입력 mpname    
+= 파인애플 과일 쥬스 과즙 음료 과즙 망고 농축액 파인애플 농축액 천년 풍 밉다 자 연속 망고 파인애플    
+추측 pname = 골드파인애플골든엔골드    
+실제 pname = 냉장자연속의파인애플망고천년풍밉다    
 
-(pname, pname 이 나오게 된 확률, pmake, pmake 가 나오게 된 확률) = 
-('골드파인애플골든엔골드\n', -284.98850180902974) ('천년풍밉다\n', -174.09845111372786)
+입력 mpstand = 망고 농축액 파인애플 농축액 천년 풍 밉다 자 연속 망고 파인애플     
+추측 pmake = 천년풍밉다    
+실제 pmake = 천년풍밉다    
+
+(pname, pname 이 나오게 된 확률, pmake, pmake 가 나오게 된 확률) =    
+('골드파인애플골든엔골드\n', -284.98850180902974) ('천년풍밉다\n', -174.09845111372786)    
+- - -
 
 결과는 잘 나왔지만 모델을 추출할 수 없었고 매번 전처리를 해줬어야 했습니다. 또한 모든 카테고리별로 확률이 분산되었기 때문에 모든 확률이 log 를 취했음에도 작은 값으로 표현되었고 그 중에서 그나마 확률이 가장 큰 값을 나타내는 카테고리를 추측 결과로 나타냈기 때문에 저희가 원하는 형태의 확률 형태인 0~100% 사이의 값으로 나타내기까지의 표현 방법 구현이 미숙하였습니다. 따라서 다른 모델을 사용하는 것으로 결정하였습니다.
 더불어 데이터 전처리를 미리 해야겠다는 필요성을 느꼈습니다. 또한 기존에는 pname 을 추측하기 위해서 mpstand 와 mpname 을 사용하고, pmake 를 추측하기 위해서 mpstand 만을 사용했는데 굳이 mpstand 만 사용할 필요 없이 mpname 도 사용해도 되겠다는 피드백을 얻었습니다.
@@ -61,31 +64,35 @@ mpstand 는 학교 급식실에서 쓴 문구로 어떠한 제품이 필요하�
 
 위의 예시를 다시 보면 데이터의 특성을 잘 나타내는 파라미터만을 사용하기 위해서, 예를 들어 숫자는 그 데이터의 특성을 잘 나타내는 파라미터가 아니라고 판단하여 제외하였습니다.
 
-- pname 의 내용은 "중화소스 / 바베큐소스"입니다.
-'/' 와 같은 요소를 포함해서 의미 없는 문구를 없애기 위해 "Punctuation" 과 "Number", "Alpha", "Foreign" 에 해당되는 형태소들을 제외하고 문장을 재구성하였습니다. 그 결과로 "중화 소스 바베큐 소스" 가 나왔습니다.
-전처리 전	"중화소스 / 바베큐소스"
-제외 요소	"Punctuation", "Number", "Alpha", "Foreign" 
-전처리 후	"중화 소스 바베큐 소스"
-
-- mpstand 의 내용은 "직화구이 숯불바베큐소스2kg(파우치) : 스모크오일/불맛나는 바베큐소스. 청정원 또는 그이상의것" 입니다. 여기서 "Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha" 를 제외하고 문장을 재구성하였습니다. 
-그 결과로 "직화 구이 숯불 바베큐 소스 파우치 스모크 오일 불맛나 는 바베큐 소스 청정 원 또는 그 이상 의 것" 이 나왔습니다.
-전처리 전	"직화구이 숯불바베큐소스2kg(파우치) : 스모크오일/불맛나는 바베큐소스. 청정원 또는 그이상의것"
-제외 요소	"Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha"
-전처리 후	"직화 구이 숯불 바베큐 소스 파우치 스모크 오일 불맛나 는 바베큐 소스 청정 원 또는 그 이상 의 것"
-
-- pname 의 내용은 "직화구이숯불바베큐소스2kg" 입니다. 여기서 "Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha" 를 제외하고 문장을 재구성하였습니다. 또한 서로 같은 제품임에도 띄어쓰기로 인해서 다른 제품으로 분류될 것을 방지하기 위해서 띄어쓰기를 사용하지 않고 나타내기로 결정했습니다. 
-그 결과로 "직화구이숯불바베큐소스" 가 나왔습니다.
-전처리 전	"직화구이숯불바베큐소스2kg"
-제외 요소	"Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha"
-추가 작업	띄어쓰기 없애기
-전처리 후	"직화구이숯불바베큐소스"
-
-- pmake 의 내용은 "대상" 입니다. 이 예제에서는 잘 나타나지 않지만 다른 의미 없는 형태소들이 함께 적힌 경우가 있었습니다. 따라서 이 역시 "Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha" 를 제외하고 문장을 재구성하였습니다. pname 과 마찬가지로 띄어쓰기로 인해서 다른 제조사로 분류될 것을 방지하기 위해서 띄어쓰기를 사용하지 않고 나타내었습니다.
-그 결과로 "대상" 이 나왔습니다.
-전처리 전	"대상"
-제외 요소	"Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha"
-추가 작업	띄어쓰기 없애기
-전처리 후	"대상"
+- - -
+* pname 의 내용은 "중화소스 / 바베큐소스"입니다.   
+'/' 와 같은 요소를 포함해서 의미 없는 문구를 없애기 위해 "Punctuation" 과 "Number", "Alpha", "Foreign" 에 해당되는 형태소들을 제외하고 문장을 재구성하였습니다. 그 결과로 "중화 소스 바베큐 소스" 가 나왔습니다.    
++ 전처리 전 :	"중화소스 / 바베큐소스"    
++ 제외 요소 :	"Punctuation", "Number", "Alpha", "Foreign"     
++ 전처리 후 :	"중화 소스 바베큐 소스"    
+- - -
+* mpstand 의 내용은 "직화구이 숯불바베큐소스2kg(파우치) : 스모크오일/불맛나는 바베큐소스. 청정원 또는 그이상의것" 입니다.    
+여기서 "Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha" 를 제외하고 문장을 재구성하였습니다. 
+그 결과로 "직화 구이 숯불 바베큐 소스 파우치 스모크 오일 불맛나 는 바베큐 소스 청정 원 또는 그 이상 의 것" 이 나왔습니다.    
++ 전처리 전 :	"직화구이 숯불바베큐소스2kg(파우치) : 스모크오일/불맛나는 바베큐소스. 청정원 또는 그이상의것"    
++ 제외 요소 :	"Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha"    
++ 전처리 후 :	"직화 구이 숯불 바베큐 소스 파우치 스모크 오일 불맛나 는 바베큐 소스 청정 원 또는 그 이상 의 것"    
+- - -
+* pname 의 내용은 "직화구이숯불바베큐소스2kg" 입니다.    
+여기서 "Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha" 를 제외하고 문장을 재구성하였습니다. 또한 서로 같은 제품임에도 띄어쓰기로 인해서 다른 제품으로 분류될 것을 방지하기 위해서 띄어쓰기를 사용하지 않고 나타내기로 결정했습니다. 
+그 결과로 "직화구이숯불바베큐소스" 가 나왔습니다.    
++ 전처리 전 :	"직화구이숯불바베큐소스2kg"    
++ 제외 요소 :	"Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha"    
++ 추가 작업 :	띄어쓰기 없애기    
++ 전처리 후 :	"직화구이숯불바베큐소스"    
+- - -
+* pmake 의 내용은 "대상" 입니다.    이 예제에서는 잘 나타나지 않지만 다른 의미 없는 형태소들이 함께 적힌 경우가 있었습니다. 따라서 이 역시 "Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha" 를 제외하고 문장을 재구성하였습니다. pname 과 마찬가지로 띄어쓰기로 인해서 다른 제조사로 분류될 것을 방지하기 위해서 띄어쓰기를 사용하지 않고 나타내었습니다.
+그 결과로 "대상" 이 나왔습니다.    
+- 전처리 전 :	"대상"    
+- 제외 요소 :	"Josa", "Eomi", "Punctuation", "Foreign", "Number", "Alpha"    
+- 추가 작업 :	띄어쓰기 없애기    
+- 전처리 후 :	"대상"    
+- - -
 
 전처리 작업이 완료된 후의 CSV 파일입니다.
 
@@ -95,27 +102,33 @@ mpstand 는 학교 급식실에서 쓴 문구로 어떠한 제품이 필요하�
 Oracle DBMS 내에서 uipath 라는 Table 을 생성하였고 이렇게 정규화된 데이터를 Oracle DBMS 에 Import 시켰습니다. 그 이유로는 전체 데이터를 학습시키려고 하니 용량이 컸기 때문에 생성에 필요한 Dimension 이 너무나 커져서 제 노트북에서는 학습이 불가능하였기 때문에 상위 데이터를 선택할 수 밖에 없었습니다. 또한 Label 에 해당되는 데이터들이 많은 것은 충분히 많았지만 적은 것은 너무 적었기 때문에 가장 많이 출현한 Label 들 중에서 상위 데이터들만을 선택할 수 밖에 없었습니다.
 
 pname 중에 특정 Label 에 속하는 데이터 중 갯수가 200개 넘는 데이터 추출
-select uipath.* 
-from uipath, (select *
-		from( select pname, count(pname) as pname_count
-	from uipath
-	group by pname
-	order by pname_count desc)
-	 where pname_count >= 200 ) subquery
-where uipath.pname = subquery.pname;
-pmake 중에 특정 Label 에 해당되는 데이터 중 갯수가 200개 넘는 데이터 추출
-select uipath.* 
-from uipath, (select *
-		from( select pmake, count(pmake) as pmake_count
-	from uipath
-	group by pmake
-	order by pmake_count desc)
-	 where pmake_count >= 200 ) subquery
-where uipath.pmake = subquery.pmake;
 
-pname query 를 사용해서 총 159107 개의 데이터를 추출할 수 있었습니다.
-{파슬리후레이크 : 1434}, {우스타소스 : 1284}, {순후추 : 1183}, ... {우리쌀떡국떡개 : 201}, {블루베리엔요 : 200}
-pmake query 를 사용해서는 총 391117 개의 데이터를 추출할 수 있었습니다
+	select uipath.* 
+	from uipath, (select *
+			from( select pname, count(pname) as pname_count
+		from uipath
+		group by pname
+		order by pname_count desc)
+		where pname_count >= 200 ) subquery
+	where uipath.pname = subquery.pname;
+
+
+pmake 중에 특정 Label 에 해당되는 데이터 중 갯수가 200개 넘는 데이터 추출
+
+	select uipath.* 
+	from uipath, (select *
+			from( select pmake, count(pmake) as pmake_count
+		from uipath
+		group by pmake
+		order by pmake_count desc)
+		where pmake_count >= 200 ) subquery
+	where uipath.pmake = subquery.pmake;
+
+
+pname query 를 사용해서 총 159107 개의 데이터를 추출할 수 있었습니다.    
+{파슬리후레이크 : 1434}, {우스타소스 : 1284}, {순후추 : 1183}, ... {우리쌀떡국떡개 : 201}, {블루베리엔요 : 200}   
+   
+pmake query 를 사용해서는 총 391117 개의 데이터를 추출할 수 있었습니다   
 {오뚜기	 : 40765}, {대상 : 26579}, {씨제이 : 24081}, ... , {진주원예농협 : 201}, {준유통 : 200}
 이와 같이 추출한 데이터들을 각각 CSV 파일로 저장하였습니다.
 
